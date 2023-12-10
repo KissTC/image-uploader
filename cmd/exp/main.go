@@ -1,31 +1,20 @@
 package main
 
-import (
-	"html/template"
-	"os"
-)
-
-type User struct {
-	Name string
-}
+import "errors"
 
 func main() {
 
-	// first we need to parse
-	t, err := template.ParseFiles("hello.html")
+}
+
+func connect() error {
+	return errors.New("connection failed")
+}
+
+func createUser() error {
+	err := connect()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	// if everything parse correctly
-	user := User{
-		Name: "Kaisa",
-	}
-
-	// execute the template
-	err = t.Execute(os.Stdout, user)
-	if err != nil {
-		panic(err)
-	}
-
+	return nil
 }
