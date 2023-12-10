@@ -25,7 +25,7 @@ func main() {
 	r.Get("/contact", controllers.StaticHandler(tpl))
 
 	tpl = views.Must(views.ParseFS(templates.FS, "faq.html"))
-	r.Get("/faq", controllers.StaticHandler(tpl))
+	r.Get("/faq", controllers.FAQ(tpl))
 
 	// r.Get("/galleries/{id}", getGalleryHandler)
 	// r.NotFound(func(w http.ResponseWriter, r *http.Request) {
