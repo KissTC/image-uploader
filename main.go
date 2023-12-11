@@ -17,14 +17,14 @@ func main() {
 	r.Use(middleware.Logger)
 
 	// parse the templates before starting html
-	tpl := views.Must(views.ParseFS(templates.FS, "home.html"))
+	tpl := views.Must(views.ParseFS(templates.FS, "home.html", "tailwind.html"))
 	r.Get("/", controllers.StaticHandler(tpl))
 
 	//r.Get("/", homeHandler)
-	tpl = views.Must(views.ParseFS(templates.FS, "contact.html"))
+	tpl = views.Must(views.ParseFS(templates.FS, "contact.html", "tailwind.html"))
 	r.Get("/contact", controllers.StaticHandler(tpl))
 
-	tpl = views.Must(views.ParseFS(templates.FS, "faq.html"))
+	tpl = views.Must(views.ParseFS(templates.FS, "faq.html", "tailwind.html"))
 	r.Get("/faq", controllers.FAQ(tpl))
 
 	// r.Get("/galleries/{id}", getGalleryHandler)
