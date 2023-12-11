@@ -7,6 +7,20 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
+  <header class="bg-gradient-to-r from-blue-800 to-indigo-800 text-white">
+    <nav class="px-8 py-6 flex items-center">
+      <div class="text-4xl pr-8 font-serif">Skaylar</div>
+      <div class="flex-grow">
+        <a class="text-lg font-semibold hover:text-blue-100 pr-8" href="/">Home</a>
+        <a class="text-lg font-semibold hover:text-blue-100 pr-8" href="/contact">Contact</a>
+        <a class="text-lg font-semibold hover:text-blue-100 pr-8" href="/faq">FAQ</a>
+      </div>
+      <div>
+        <a class="pr-4" href="#">Sign in</a>
+        <a class="px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded" href="#">Sign on</a>
+      </div>
+    </nav>
+  </header>
 {{end}}
 {{define "footer"}}
 </body>
