@@ -17,18 +17,24 @@ func main() {
 	r.Use(middleware.Logger)
 
 	// parse the templates before starting html
-	tpl := views.Must(views.ParseFS(templates.FS, "home.html", "tailwind.html"))
-	r.Get("/", controllers.StaticHandler(tpl))
+	r.Get("/", controllers.StaticHandler(views.Must(views.ParseFS(
+		templates.FS,
+		"home.html", "tailwind.html",
+	))))
 
 	//r.Get("/", homeHandler)
-	tpl = views.Must(views.ParseFS(templates.FS, "contact.html", "tailwind.html"))
-	r.Get("/contact", controllers.StaticHandler(tpl))
+	r.Get("/contact", controllers.StaticHandler(views.Must(views.ParseFS(
+		templates.FS,
+		"contact.html", "tailwind.html",
+	))))
 
-	tpl = views.Must(views.ParseFS(templates.FS, "faq.html", "tailwind.html"))
+	tpl := views.Must(views.ParseFS(templates.FS, "faq.html", "tailwind.html"))
 	r.Get("/faq", controllers.FAQ(tpl))
 
-	tpl = views.Must(views.ParseFS(templates.FS, "signup.html", "tailwind.html"))
-	r.Get("/signup", controllers.FAQ(tpl))
+	usersC := controllers.Users{}
+	usersC.Templates.New = views.Must(views.ParseFS(templates.FS, "signup.html", "tailwind.html"))
+	r.Get("/signup", usersC.New)
+	r.Post("/users", usersC.Create)
 
 	// r.Get("/galleries/{id}", getGalleryHandler)
 	// r.NotFound(func(w http.ResponseWriter, r *http.Request) {
