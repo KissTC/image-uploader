@@ -12,8 +12,12 @@ type Users struct {
 }
 
 func (u Users) New(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Email string
+	}
+	data.Email = r.FormValue("email")
 	// view to render
-	u.Templates.New.Execute(w, nil)
+	u.Templates.New.Execute(w, data)
 }
 
 // parsing the signup form, --> POST - respond when user submit the form
