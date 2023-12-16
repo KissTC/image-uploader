@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gorilla/csrf"
 	"github.com/kisstc/image_uploader/controllers"
 	"github.com/kisstc/image_uploader/models"
 	"github.com/kisstc/image_uploader/templates"
@@ -54,10 +55,10 @@ func main() {
 	r.Post("/signin", usersC.ProcessSignIn)
 	r.Get("/users/me", usersC.CurrentUser)
 
-	// r.Get("/galleries/{id}", getGalleryHandler)
-	// r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-	// 	http.Error(w, "page not found", http.StatusNotFound)
-	// })
 	fmt.Println("starting server on port 3000...")
-	http.ListenAndServe(":3000", r)
+	csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX"
+	csrfMw := csrf.Protect(
+		[]byte(csrfKey),
+		csrf.Secure(false)) //TODO: Fix this before deploying
+	http.ListenAndServe(":3000", csrfMw(r))
 }

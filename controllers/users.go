@@ -21,7 +21,7 @@ func (u Users) New(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Email = r.FormValue("email")
 	// view to render
-	u.Templates.New.Execute(w, data)
+	u.Templates.New.Execute(w, r, data)
 }
 
 // parsing the signup form, --> POST - respond when user submit the form
@@ -46,7 +46,7 @@ func (u Users) SignIn(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Email = r.FormValue("email")
 	// view to render
-	u.Templates.SignIn.Execute(w, data)
+	u.Templates.SignIn.Execute(w, r, data)
 }
 
 func (u Users) ProcessSignIn(w http.ResponseWriter, r *http.Request) {
@@ -65,9 +65,10 @@ func (u Users) ProcessSignIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cookie := http.Cookie{
-		Name:  "email",
-		Value: user.Email,
-		Path:  "/",
+		Name:     "email",
+		Value:    user.Email,
+		Path:     "/",
+		HttpOnly: true,
 	}
 	http.SetCookie(w, &cookie)
 
