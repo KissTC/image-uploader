@@ -69,28 +69,34 @@ func (ss *SessionService) Create(userID int) (*Session, error) {
 	return &session, nil
 }
 
+// check if the user exists in the session db
 func (ss *SessionService) User(token string) (*User, error) {
 	tokenHash := ss.hash(token)
 	var user User
 	row := ss.DB.QueryRow(`
-		SELECT user_id FROM sessions WHERE token_hash = $1;
+		SELECT users.id,
+			users.email,
+			users.password_hash
+		FROM sessions
+			INNER JOIN users ON users.id = sessions.user_id
+		WHERE sessions.token_hash = $1;
 		`, tokenHash)
-	err := row.Scan(&user.ID)
-	if err != nil {
-		return nil, fmt.Errorf("user: %w", err)
-	}
-
-	// we have the user id, now query for the user
-	row = ss.DB.QueryRow(`
-		SELECT email, password_hash
-		FROM users WHERE id = $1;
-	`, user.ID)
-	err = row.Scan(&user.Email, &user.PasswordHash)
+	err := row.Scan(&user.ID, &user.Email, &user.PasswordHash)
 	if err != nil {
 		return nil, fmt.Errorf("user: %w", err)
 	}
 
 	return &user, nil
+}
+
+func (ss *SessionService) Delete(token string) error {
+	tokenHash := ss.hash(token)
+	_, err := ss.DB.Exec(`DELETE FROM sessions WHERE token_hash = $1;`, tokenHash)
+	if err != nil {
+		return fmt.Errorf("delete: %w", err)
+	}
+
+	return nil
 }
 
 func (ss *SessionService) hash(token string) string {
