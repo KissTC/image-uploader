@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/kisstc/image_uploader/context"
 	"github.com/kisstc/image_uploader/models"
 )
 
@@ -86,20 +87,7 @@ func (u Users) ProcessSignIn(w http.ResponseWriter, r *http.Request) {
 
 // take the cookie stored look up the current user
 func (u Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
-	token, err := readCookie(r, CookieSession)
-	if err != nil {
-		fmt.Println(err)
-		http.Redirect(w, r, "/signin", http.StatusFound)
-		return
-	}
-
-	user, err := u.SessionService.User(token)
-	if err != nil {
-		fmt.Println(err)
-		http.Redirect(w, r, "/signin", http.StatusFound)
-		return
-	}
-
+	user := context.User(r.Context())
 	fmt.Fprintf(w, "current user %s\n", user.Email)
 }
 
@@ -121,4 +109,42 @@ func (u Users) ProcessSignOut(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/signin", http.StatusFound)
 
+}
+
+type UserMiddelware struct {
+	SessionService *models.SessionService
+}
+
+func (umw UserMiddelware) SetUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token, err := readCookie(r, CookieSession)
+		if err != nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		user, err := umw.SessionService.User(token)
+		if err != nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		ctx := r.Context()
+		ctx = context.WithUser(ctx, user)
+		// update the request
+		r = r.WithContext(ctx)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (umw UserMiddelware) RequireUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := context.User(r.Context())
+		if user == nil {
+			http.Redirect(w, r, "/signin", http.StatusFound)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
