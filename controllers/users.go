@@ -125,6 +125,7 @@ func (umw UserMiddelware) SetUser(next http.Handler) http.Handler {
 
 		user, err := umw.SessionService.User(token)
 		if err != nil {
+			//TODO: check when session token is empty
 			next.ServeHTTP(w, r)
 			return
 		}
