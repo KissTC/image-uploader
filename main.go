@@ -47,7 +47,7 @@ func loadEnvConfig() (config, error) {
 	cfg.SMTP.Username = os.Getenv("SMTP_USERNAME")
 	cfg.SMTP.Password = os.Getenv("SMTP_PASSWORD")
 
-	cfg.CSRF.Key = "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX"
+	cfg.CSRF.Key = "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUC"
 	cfg.CSRF.Secure = false
 
 	// server
@@ -128,7 +128,7 @@ func main() {
 	r.Get("/faq", controllers.FAQ(tpl))
 
 	r.Get("/signup", usersC.New)
-	r.Post("/users", usersC.Create)
+	r.Post("/signup", usersC.Create)
 	r.Get("/signin", usersC.SignIn)
 	r.Post("/signin", usersC.ProcessSignIn)
 	r.Post("/signout", usersC.ProcessSignOut)
