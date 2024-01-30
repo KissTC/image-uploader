@@ -43,7 +43,7 @@ func (service *GalleryService) ByID(id int) (*Gallery, error) {
 	row := service.DB.QueryRow(`
 	SELECT title, user_id
 	FROM galleries
-	WHERE id = $1
+	WHERE id = $1;
 	`, gallery.ID)
 	err := row.Scan(&gallery.Title, &gallery.UserID)
 	if err != nil {
@@ -53,4 +53,58 @@ func (service *GalleryService) ByID(id int) (*Gallery, error) {
 		return nil, fmt.Errorf("ByID gallery: %w", err)
 	}
 	return &gallery, nil
+}
+
+func (service *GalleryService) ByUserID(userID int) ([]Gallery, error) {
+	rows, err := service.DB.Query(`
+	SELECT id, title
+	FROM galleries
+	WHERE user_id = $1;
+	`, userID)
+	if err != nil {
+		return nil, fmt.Errorf("ByUser gallery: %w", err)
+	}
+
+	var galleries []Gallery
+	for rows.Next() {
+		gallery := Gallery{
+			UserID: userID,
+		}
+		err = rows.Scan(&gallery.ID, &gallery.Title)
+		if err != nil {
+			return nil, fmt.Errorf("query galleries by user: %w", err)
+		}
+		galleries = append(galleries, gallery)
+	}
+
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("query galleries by user: %w", err)
+	}
+
+	return galleries, nil
+}
+
+func (service *GalleryService) Update(gallery *Gallery) error {
+	_, err := service.DB.Exec(`
+	UPDATE galleries
+	SET title = $2
+	WHERE id = $1;
+	`, gallery.ID, gallery.Title)
+	if err != nil {
+		return fmt.Errorf("update gallery: %w", err)
+	}
+
+	return nil
+}
+
+func (service *GalleryService) Delete(id int) error {
+	_, err := service.DB.Exec(`
+	DELETE FROM galleries
+	WHERE id = $1;
+	`, id)
+	if err != nil {
+		return fmt.Errorf("delete gallery: %w", err)
+	}
+
+	return nil
 }
