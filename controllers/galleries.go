@@ -3,8 +3,9 @@ package controllers
 import (
 	"errors"
 	"fmt"
-	"math/rand"
 	"net/http"
+	"net/url"
+	"path/filepath"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -56,15 +57,33 @@ func (g Galleries) Edit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var data struct {
-		ID    int
-		Title string
+	type Image struct {
+		GalleryID       int
+		Filename        string
+		FilenameEscaped string
 	}
 
-	data.ID = gallery.ID
-	data.Title = gallery.Title
-	g.Templates.Edit.Execute(w, r, data)
+	var data struct {
+		ID     int
+		Title  string
+		Images []Image
+	}
 
+	images, err := g.GalleryService.Images(gallery.ID)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+	for _, image := range images {
+		data.Images = append(data.Images, Image{
+			GalleryID:       image.GalleryID,
+			Filename:        image.Filename,
+			FilenameEscaped: url.PathEscape(image.Filename),
+		})
+	}
+
+	g.Templates.Edit.Execute(w, r, data)
 }
 
 func (g Galleries) Update(w http.ResponseWriter, r *http.Request) {
@@ -100,6 +119,46 @@ func (g Galleries) Delete(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/galleries", http.StatusFound)
 }
 
+func (g Galleries) Image(w http.ResponseWriter, r *http.Request) {
+	filename := g.filename(w, r)
+	galleryID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusNotFound)
+		return
+	}
+	image, err := g.GalleryService.Image(galleryID, filename)
+	if err != nil {
+		if errors.Is(err, models.ErrNotFound) {
+			http.Error(w, "image not found", http.StatusNotFound)
+			return
+		}
+		fmt.Println(err)
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	http.ServeFile(w, r, image.Path)
+}
+
+func (g Galleries) DeleteImage(w http.ResponseWriter, r *http.Request) {
+	filename := g.filename(w, r)
+
+	// check if the user who wants to delete de image owns the gallery
+	gallery, err := g.galleryById(w, r, userMustKnwoGallery)
+	if err != nil {
+		return
+	}
+
+	err = g.GalleryService.DeleteImage(gallery.ID, filename)
+	if err != nil {
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	editPath := fmt.Sprintf("/galleries/%d/edit", gallery.ID)
+	http.Redirect(w, r, editPath, http.StatusFound)
+}
+
 func (g Galleries) Index(w http.ResponseWriter, r *http.Request) {
 	type Gallery struct {
 		ID    int
@@ -132,27 +191,40 @@ func (g Galleries) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	type Image struct {
+		GalleryID       int
+		Filename        string
+		FilenameEscaped string
+	}
+
 	var data struct {
 		ID     int
 		Title  string
-		Images []string
+		Images []Image
 	}
-
 	data.ID = gallery.ID
 	data.Title = gallery.Title
-	// We are going to psuedo-randomly come up with 20 images to render for our
-	// gallery until we actually support uploading images. These images will use
-	// placekitten.com, which gives us cat images.
-	for i := 0; i < 20; i++ {
-		// width and height are random values betwee 200 and 700
-		w, h := rand.Intn(500)+200, rand.Intn(500)+200
-		// using the width and height, we generate a URL
-		catImageURL := fmt.Sprintf("https://placekitten.com/%d/%d", w, h)
-		// Then we add the URL to our images.
-		data.Images = append(data.Images, catImageURL)
+	images, err := g.GalleryService.Images(gallery.ID)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+	for _, image := range images {
+		data.Images = append(data.Images, Image{
+			GalleryID:       image.GalleryID,
+			Filename:        image.Filename,
+			FilenameEscaped: url.PathEscape(image.Filename),
+		})
 	}
 
 	g.Templates.Show.Execute(w, r, data)
+}
+
+func (g Galleries) filename(w http.ResponseWriter, r *http.Request) string {
+	filename := chi.URLParam(r, "filename")
+	filename = filepath.Base(filename)
+	return filename
 }
 
 type galleryOpt func(w http.ResponseWriter, r *http.Request, gallery *models.Gallery) error
