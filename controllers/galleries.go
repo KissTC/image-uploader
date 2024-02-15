@@ -68,7 +68,8 @@ func (g Galleries) Edit(w http.ResponseWriter, r *http.Request) {
 		Title  string
 		Images []Image
 	}
-
+	data.ID = gallery.ID
+	data.Title = gallery.Title
 	images, err := g.GalleryService.Images(gallery.ID)
 	if err != nil {
 		fmt.Println(err)
@@ -138,6 +139,45 @@ func (g Galleries) Image(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.ServeFile(w, r, image.Path)
+}
+
+func (g Galleries) UploadImage(w http.ResponseWriter, r *http.Request) {
+	gallery, err := g.galleryById(w, r, userMustKnwoGallery)
+	fmt.Println(gallery)
+	if err != nil {
+		return
+	}
+
+	err = r.ParseMultipartForm(10 << 20) // 5mb - bit shifts
+	if err != nil {
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	fileHeaders := r.MultipartForm.File["images"]
+	for _, fileHeader := range fileHeaders {
+		file, err := fileHeader.Open()
+		if err != nil {
+			http.Error(w, "something went wrong", http.StatusInternalServerError)
+			return
+		}
+
+		defer file.Close()
+
+		err = g.GalleryService.CreateImage(gallery.ID, fileHeader.Filename, file)
+		if err != nil {
+			var fileError models.FileError
+			if errors.As(err, &fileError) {
+				msg := fmt.Sprintf("%v has an invalid content type or extension. Only png, gif and jpg files can uploades", fileHeader.Filename)
+				http.Error(w, msg, http.StatusBadRequest)
+				return
+			}
+			http.Error(w, "something went wrong", http.StatusInternalServerError)
+		}
+	}
+
+	editPath := fmt.Sprintf("/galleries/%d/edit", gallery.ID)
+	http.Redirect(w, r, editPath, http.StatusFound)
 }
 
 func (g Galleries) DeleteImage(w http.ResponseWriter, r *http.Request) {
@@ -235,6 +275,8 @@ func (g Galleries) galleryById(w http.ResponseWriter, r *http.Request, opts ...g
 		http.Error(w, "invalid id", http.StatusNotFound)
 		return nil, err
 	}
+
+	fmt.Println(id)
 
 	gallery, err := g.GalleryService.ByID(id)
 	if err != nil {
