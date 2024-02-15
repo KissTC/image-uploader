@@ -276,8 +276,6 @@ func (g Galleries) galleryById(w http.ResponseWriter, r *http.Request, opts ...g
 		return nil, err
 	}
 
-	fmt.Println(id)
-
 	gallery, err := g.GalleryService.ByID(id)
 	if err != nil {
 		if errors.Is(err, models.ErrNotFound) {

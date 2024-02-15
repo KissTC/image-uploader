@@ -217,7 +217,7 @@ func (service *GalleryService) extensions() []string {
 
 func (service *GalleryService) imageContentTypes() []string {
 	return []string{
-		"image/png", "image/jpeg", "image/gif",
+		"image/png", "image/jpeg", "image/gif", "image/jpg", "image/webp",
 	}
 }
 
