@@ -1,3 +1,10 @@
 .env
 
+docker-compose.overrride.yml
+docker-compose.yml
+
 /images
+
+# node stuff
+node_modules/
+package-lock.json
