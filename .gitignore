@@ -1,7 +1,6 @@
 .env
 
 docker-compose.overrride.yml
-docker-compose.yml
 
 /images
 
